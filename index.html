@@ -444,16 +444,7 @@
     </div>
     <div id="blocked-dates-chips" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:15px;"></div>
 </div>
-.brand-card svg {
-            width: 150px; 
-            height: auto;
-            transition: width 0.3s ease;
-        }
 
-        @media (max-width: 600px) {
-            .brand-card svg {
-                width: 250px !important; 
-            }
 <style>
     .day-circle { width: 35px; height: 35px; border-radius: 50%; border: 1px solid #d4af37; background: transparent; color: white; cursor: pointer; }
     .day-circle.active { background: #d4af37; color: black; font-weight: bold; }
@@ -770,6 +761,7 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
                 showPage('page-admin'); 
                 listenToAdmin(); 
                 listenToClients(); 
+            startAdminAlerts();
             } 
             else {
                 showPage('page-home');
@@ -1013,7 +1005,12 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
 
         function cancelOrder(id, date) {
             if(date === new Date().toISOString().split('T')[0]) return alert("לא ניתן לבטל תור ביום התור.");
-            if(confirm("לבטל?")) db.collection("orders").doc(id).delete();
+            if(confirm("לבטל?")) {
+        db.collection("orders").doc(id).get().then(doc => {
+            db.collection("cancellations").add({...doc.data(), cancelledAt: new Date().toISOString()});
+            doc.ref.delete();
+        });
+    }
         }
 
         async function updateNews() { await db.collection("settings").doc("news").set({ text: document.getElementById('admin-news-input').value }); alert("ההודעה עודכנה!"); }
@@ -1395,6 +1392,27 @@ window.deleteWaitingItem = async function(id) {
     }
 };
         window.onload = checkAuth;
+// פונקציה להאזנה לביטולים (חד-פעמית)
+function startAdminAlerts() {
+    db.collection("cancellations")
+      .orderBy("cancelledAt", "desc")
+      .limit(1)
+      .onSnapshot((snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+              if (change.type === "added") {
+                  const data = change.doc.data();
+                  const alertId = "cancel_" + data.cancelledAt;
+
+                  // מציג התראה רק אם לא ראינו אותה בעבר
+                  if (!localStorage.getItem(alertId)) {
+                      if (confirm(`🚨 ביטול תור חדש!\nלקוח: ${data.name}\nיום: ${data.date} בשעה ${data.time}\n\nלחץ "אישור" כדי לסמן שראית.`)) {
+                          localStorage.setItem(alertId, "seen");
+                      }
+                  }
+              }
+          });
+      });
+}
     </script>
 <div id="waitingListModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center;">
     <div style="background:#1a1a1a; padding:20px; border-radius:15px; width:280px; border:1px solid #d4af37; text-align:right; direction:rtl;">
