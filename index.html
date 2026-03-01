@@ -1005,7 +1005,7 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
 
         function cancelOrder(id, date) {
             if(date === new Date().toISOString().split('T')[0]) return alert("לא ניתן לבטל תור ביום התור.");
-            if(confirm("לבטל?")) {
+            if(confirm("לבטל את התור?")) {
         db.collection("orders").doc(id).get().then(doc => {
 if (!doc.exists) return alert("התור לא נמצא.");
             db.collection("cancellations").add({...doc.data(), cancelledAt: new Date().toISOString()});
