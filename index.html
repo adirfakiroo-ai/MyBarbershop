@@ -1013,7 +1013,7 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
 
         function cancelOrder(id, date) {
             if(date === new Date().toISOString().split('T')[0]) return alert("לא ניתן לבטל תור ביום התור.");
-            if(confirm("לבטל?")) {
+           if(confirm("לבטל?")) {
         db.collection("orders").doc(id).get().then(doc => {
             db.collection("cancellations").add({...doc.data(), cancelledAt: new Date().toISOString()});
             doc.ref.delete();
@@ -1400,16 +1400,18 @@ window.deleteWaitingItem = async function(id) {
     }
 };
         window.onload = checkAuth;
-// מאזין לביטולים ומקפיץ התראה לאדמין
-db.collection("cancellations").onSnapshot(snapshot => {
+// שומרים את זמן טעינת הדף כדי לא להקפיץ ישנים
+const sessionStartTime = new Date().toISOString();
+
+db.collection("cancellations")
+  .onSnapshot(snapshot => {
     snapshot.docChanges().forEach(change => {
-        if (change.type === "added") {
-            const data = change.doc.data();
-            // בדיקה האם המשתמש המחובר הוא האדמין
-            if (localStorage.getItem('user_phone') === ADMIN_ID) {
-                alert("🚨 ביטול תור חדש! לקוח: " + data.name + " ליום " + data.date);
-            }
-        }
+      // בודקים רק ביטולים חדשים שנוצרו אחרי שהדף נטען
+      if (change.type === "added" && change.doc.data().cancelledAt > sessionStartTime) {
+          if (localStorage.getItem('user_phone') === ADMIN_ID) {
+              alert("🚨 ביטול תור חדש! לקוח: " + change.doc.data().name + " ליום " + change.doc.data().date);
+          }
+      }
     });
 });
     </script>
