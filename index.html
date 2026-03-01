@@ -1013,12 +1013,7 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
 
         function cancelOrder(id, date) {
             if(date === new Date().toISOString().split('T')[0]) return alert("לא ניתן לבטל תור ביום התור.");
-           if(confirm("לבטל?")) {
-        db.collection("orders").doc(id).get().then(doc => {
-            db.collection("cancellations").add({...doc.data(), cancelledAt: new Date().toISOString()});
-            doc.ref.delete();
-        });
-    }
+            if(confirm("לבטל?")) db.collection("orders").doc(id).delete();
         }
 
         async function updateNews() { await db.collection("settings").doc("news").set({ text: document.getElementById('admin-news-input').value }); alert("ההודעה עודכנה!"); }
@@ -1400,20 +1395,6 @@ window.deleteWaitingItem = async function(id) {
     }
 };
         window.onload = checkAuth;
-// שומרים את זמן טעינת הדף כדי לא להקפיץ ישנים
-const sessionStartTime = new Date().toISOString();
-
-db.collection("cancellations")
-  .onSnapshot(snapshot => {
-    snapshot.docChanges().forEach(change => {
-      // בודקים רק ביטולים חדשים שנוצרו אחרי שהדף נטען
-      if (change.type === "added" && change.doc.data().cancelledAt > sessionStartTime) {
-          if (localStorage.getItem('user_phone') === ADMIN_ID) {
-              alert("🚨 ביטול תור חדש! לקוח: " + change.doc.data().name + " ליום " + change.doc.data().date);
-          }
-      }
-    });
-});
     </script>
 <div id="waitingListModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center;">
     <div style="background:#1a1a1a; padding:20px; border-radius:15px; width:280px; border:1px solid #d4af37; text-align:right; direction:rtl;">
