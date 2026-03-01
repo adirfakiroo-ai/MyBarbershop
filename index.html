@@ -1394,20 +1394,22 @@ window.deleteWaitingItem = async function(id) {
         await db.collection("waiting_list").doc(id).delete();
     }
 };
-        window.onload = function() {
-    checkAuth(); // הרצה של אימות המשתמש הקיים שלך
-    
-    // מאכלס את הרובליקה בתאריך של היום אם היא ריקה
+       window.addEventListener('load', async () => {
+    // 1. קודם כל נריץ את האימות
+    await checkAuth();
+
+    // 2. עכשיו נמלא את התאריך (אחרי שהעמוד נטען לחלוטין)
     const dateInput = document.getElementById('book-date');
     if (dateInput && !dateInput.value) {
-        dateInput.valueAsDate = new Date(); // קובע את היום כתאריך ברירת מחדל
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
         
-        // מריץ את loadHours אם היא קיימת, כדי שהשעות יופיעו מיד
+        // 3. מריצים את טעינת השעות של היום
         if (typeof loadHours === 'function') {
             loadHours();
         }
     }
-};
+});
     </script>
 <div id="waitingListModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center;">
     <div style="background:#1a1a1a; padding:20px; border-radius:15px; width:280px; border:1px solid #d4af37; text-align:right; direction:rtl;">
