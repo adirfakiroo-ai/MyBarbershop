@@ -1010,6 +1010,7 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
 if (!doc.exists) return alert("התור לא נמצא.");
             db.collection("cancellations").add({...doc.data(), cancelledAt: new Date().toISOString()});
             doc.ref.delete().then(() => {
+alert("התור בוטל בהצלחה!"); 
     location.reload();
 });
         });
