@@ -444,7 +444,16 @@
     </div>
     <div id="blocked-dates-chips" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:15px;"></div>
 </div>
+.brand-card svg {
+            width: 150px; 
+            height: auto;
+            transition: width 0.3s ease;
+        }
 
+        @media (max-width: 600px) {
+            .brand-card svg {
+                width: 250px !important; 
+            }
 <style>
     .day-circle { width: 35px; height: 35px; border-radius: 50%; border: 1px solid #d4af37; background: transparent; color: white; cursor: pointer; }
     .day-circle.active { background: #d4af37; color: black; font-weight: bold; }
@@ -553,11 +562,11 @@ function selectServiceType(element, name) {
                 <div class="story-card"><img src="https://i.ibb.co/5WnB5xjy/2e7e84c4-a4ad-4b0a-9914-5b716a4550ae.jpg" class="main-img"><div class="barber-badge"><span>עמית</span><img src="https://i.ibb.co/b5YvzxGS/IMG-5965.png"></div></div>
                 <div class="story-card"><img src="https://i.ibb.co/Fb10Jk7M/1f029f4f-4362-4a34-8467-0179401e2b0e.jpg" class="main-img"><div class="barber-badge"><span>אורי</span><img src="https://i.ibb.co/nMkFFmrf/IMG-5964.png"></div></div>
                 <div class="story-card"><img src="https://i.ibb.co/ZzyFvX1H/ce1dd1c5-4caf-43af-ae66-b81dc07400.jpg" class="main-img"><div class="barber-badge"><span>עמית</span><img src="https://i.ibb.co/b5YvzxGS/IMG-5965.png"></div></div>
-                <div class="story-card"><img src="https://i.ibb.co/4g26Q6PD/IMG-5959.png" class="main-img"><div class="barber-badge"><span>אורי</span><img src="https://i.ibb.co/nMkFFmrf/IMG-5964.png"></div></div>
-                <div class="story-card"><img src="https://i.ibb.co/v66p99Y6/IMG-5961.png" class="main-img"><div class="barber-badge"><span>עמית</span><img src="https://i.ibb.co/b5YvzxGS/IMG-5965.png"></div></div>
-                <div class="story-card"><img src="https://i.ibb.co/hR0pS7vG/IMG-5960.png" class="main-img"><div class="barber-badge"><span>אורי</span><img src="https://i.ibb.co/nMkFFmrf/IMG-5964.png"></div></div>
-                <div class="story-card"><img src="https://i.ibb.co/LzXfP9t4/IMG-5962.png" class="main-img"><div class="barber-badge"><span>עמית</span><img src="https://i.ibb.co/b5YvzxGS/IMG-5965.png"></div></div>
-                <div class="story-card"><img src="https://i.ibb.co/N6v6YmRz/IMG-5963.png" class="main-img"><div class="barber-badge"><span>אורי</span><img src="https://i.ibb.co/nMkFFmrf/IMG-5964.png"></div></div>
+                <div class="story-card"><img src="https://i.ibb.co/LzPYSKBy/IMG-6155.jpg" class="main-img"><div class="barber-badge"><span>אורי</span><img src="https://i.ibb.co/nMkFFmrf/IMG-5964.png"></div></div>
+                <div class="story-card"><img src="https://i.ibb.co/831Gswj/IMG-6156.jpg" class="main-img"><div class="barber-badge"><span>עמית</span><img src="https://i.ibb.co/b5YvzxGS/IMG-5965.png"></div></div>
+                <div class="story-card"><img src="https://i.ibb.co/84PhgK5m/IMG-6157.jpg" class="main-img"><div class="barber-badge"><span>אורי</span><img src="https://i.ibb.co/nMkFFmrf/IMG-5964.png"></div></div>
+                <div class="story-card"><img src="https://i.ibb.co/Z6tB1Hkk/IMG-6163.jpg" class="main-img"><div class="barber-badge"><span>עמית</span><img src="https://i.ibb.co/b5YvzxGS/IMG-5965.png"></div></div>
+                <div class="story-card"><img src="https://i.ibb.co/h1KDSNFN/IMG-6164.jpg" class="main-img"><div class="barber-badge"><span>אורי</span><img src="https://i.ibb.co/nMkFFmrf/IMG-5964.png"></div></div>
             </div>
             <button class="book-btn filled" style="margin-top:20px;" onclick="showPage('page-home')">חזור</button>
         </div>
