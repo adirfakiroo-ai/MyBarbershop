@@ -787,7 +787,10 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
     const date = document.getElementById('book-date').value;
     const grid = document.getElementById('hours-grid');
     const selectedBarber = localStorage.getItem('sel_barber');
-    
+    if (!date) {
+        grid.innerHTML = '<p style="grid-column: 1/4; color: #888; text-align: center; padding: 20px;">נא לבחור תאריך מהיומן כדי לראות זמינות שעות</p>';
+        return; 
+    }
     if(!date) return;
     if(hoursUnsubscribe) hoursUnsubscribe();
     grid.innerHTML = 'טוען שעות פנויות...';
