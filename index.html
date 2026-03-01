@@ -1013,7 +1013,12 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
 
         function cancelOrder(id, date) {
             if(date === new Date().toISOString().split('T')[0]) return alert("לא ניתן לבטל תור ביום התור.");
-            if(confirm("לבטל?")) db.collection("orders").doc(id).delete();
+            if(confirm("לבטל?")) {
+        db.collection("orders").doc(id).get().then(doc => {
+            db.collection("cancellations").add({...doc.data(), cancelledAt: new Date().toISOString()});
+            doc.ref.delete();
+        });
+    }
         }
 
         async function updateNews() { await db.collection("settings").doc("news").set({ text: document.getElementById('admin-news-input').value }); alert("ההודעה עודכנה!"); }
@@ -1394,18 +1399,19 @@ window.deleteWaitingItem = async function(id) {
         await db.collection("waiting_list").doc(id).delete();
     }
 };
-        window.onload = async function() {
-    await checkAuth(); // קודם מריצים את האימות
-    
-    // מילוי תאריך היום וטעינת השעות אוטומטית
-    const dateInput = document.getElementById('book-date');
-    if (dateInput) {
-        dateInput.value = new Date().toLocaleDateString('sv-SE');
-        if (typeof loadHours === 'function') {
-            loadHours();
+        window.onload = checkAuth;
+// מאזין לביטולים ומקפיץ התראה לאדמין
+db.collection("cancellations").onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(change => {
+        if (change.type === "added") {
+            const data = change.doc.data();
+            // בדיקה האם המשתמש המחובר הוא האדמין
+            if (localStorage.getItem('user_phone') === ADMIN_ID) {
+                alert("🚨 ביטול תור חדש! לקוח: " + data.name + " ליום " + data.date);
+            }
         }
-    }
-};
+    });
+});
     </script>
 <div id="waitingListModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center;">
     <div style="background:#1a1a1a; padding:20px; border-radius:15px; width:280px; border:1px solid #d4af37; text-align:right; direction:rtl;">
