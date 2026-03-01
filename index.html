@@ -417,7 +417,10 @@
 <button type="button" class="book-btn filled" style="margin-bottom:15px; background-color: #d4af37; color: black; border: none;" onclick="toggleDayBlockMenu()">
     📅 ניהול חופשות וימי סגירה
 </button>
-
+<div style="text-align: center; background: #f9f9f9; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #d4af37;">
+    <label style="font-weight: bold; color: #d4af37;">קפוץ ליום ביומן: </label>
+    <input type="date" id="jump-to-date" onchange="jumpToDate()">
+</div>
 <div id="day-block-menu" style="display:none; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed #d4af37; direction: rtl;">
     <h5 style="color:#d4af37; margin: 0 0 10px 0; font-size: 14px;">1. בחר עבור מי החסימה:</h5>
     <select id="block-barber-select" class="input-style" style="margin-bottom:15px; border-color:#d4af37; width:100%; background:#1a1a1a; color:white;" onchange="loadBlockedDaysSettings()">
@@ -814,6 +817,7 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
         for(let h=10; h<19; h++) { hours.push(`${h}:00`, `${h}:30`); }
         
         grid.innerHTML = '';
+grid.id = 'date-' + date;
         hours.forEach(h => {
             if(!taken.includes(h)) {
                 const d = document.createElement('div');
@@ -909,7 +913,7 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
                 orders.forEach(o => {
                     if(o.date !== lastDate) {
                         const dateLabel = o.date === todayStr ? "היום" : o.date.split('-').reverse().join('/');
-                        container.innerHTML += `<div style="width:100%; text-align:center;"><div class="date-divider">תורים ל-${dateLabel}</div></div>`;
+                        container.innerHTML += `<div id="date-${o.date}" style="width:100%; text-align:center;"><div class="date-divider">תורים ל-${dateLabel}</div></div>`;
                         container.innerHTML += `
                             <div style="display: flex; gap: 10px; align-items: flex-start; margin-bottom:20px;">
                                 <div style="flex: 1;">
@@ -1124,6 +1128,17 @@ document.getElementById('cancel-btn').onclick = () => cancelOrder(closestAppt.id
         }
     } catch (e) {
         console.error("שגיאה במשיכת נתונים:", e);
+    }
+}
+// --- פונקציית הקפיצה לתאריך ביומן ---
+function jumpToDate() {
+    const selectedDate = document.getElementById('jump-to-date').value;
+    const targetElement = document.getElementById('date-' + selectedDate);
+    
+    if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        alert("לא נמצאו תורים לתאריך הזה.");
     }
 }
 // פונקציות לניהול הפופ-אפ
