@@ -827,16 +827,9 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
                 const d = document.createElement('div');
                 d.className = 'hour-item';
                 d.innerText = h; 
-            d.style.borderColor = 'red';
-                d.style.color = 'red';
-                d.style.background = 'rgba(255, 0, 0, 0.1)';
-                d.onclick = () => openWaitingListModal(date); 
-            } else {
-                // תור פנוי: כרגיל
                 d.onclick = () => confirmOrder(h, date);
+                grid.appendChild(d);
             }
-            
-            grid.appendChild(d);
         });
         
        if(grid.innerHTML === "") {
