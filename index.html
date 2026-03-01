@@ -348,7 +348,7 @@
 <div id="next-appointment-card" style="display: none; background: rgba(212, 175, 55, 0.1); border-right: 4px solid #D4AF37; padding: 12px; border-radius: 10px; margin-bottom: 15px; text-align: right; width: 100%; box-sizing: border-box;">
     <p style="margin: 0; font-size: 14px; font-weight: bold; color: #D4AF37;">📅 התור הקרוב שלך:</p>
     <p id="next-appointment-text" style="margin: 5px 0; font-size: 14px; color: white"></p>
-    <span onclick="cancelCurrentAppointment()" style="color: #ff4444; font-size: 12px; cursor: pointer; text-decoration: underline; font-weight: bold;">ביטול תור</span>
+   <span id="cancel-btn" style="color: #ff4444; font-size: 12px; cursor: pointer; text-decoration: underline; font-weight: bold;">ביטול תור</span>
 </div>
             <button class="book-btn filled" onclick="document.getElementById('staff-area').scrollIntoView({behavior:'smooth'})">קביעת תור עכשיו</button>
             <div id="staff-area" style="margin-top:40px;">
@@ -1007,8 +1007,11 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
             if(date === new Date().toISOString().split('T')[0]) return alert("לא ניתן לבטל תור ביום התור.");
             if(confirm("לבטל?")) {
         db.collection("orders").doc(id).get().then(doc => {
+if (!doc.exists) return alert("התור לא נמצא.");
             db.collection("cancellations").add({...doc.data(), cancelledAt: new Date().toISOString()});
-            doc.ref.delete();
+            doc.ref.delete().then(() => {
+    location.reload();
+});
         });
     }
         }
@@ -1115,6 +1118,7 @@ async function checkNextAppointmentSimple() {
                 
                 text.innerHTML = `שירות: ${closestAppt.service} <br> ב-<b>${prettyDate}</b> בשעה <b>${closestAppt.time}</b>`;
                 card.style.display = 'block';
+document.getElementById('cancel-btn').onclick = () => cancelOrder(closestAppt.id, closestAppt.date);
             }
         }
     } catch (e) {
