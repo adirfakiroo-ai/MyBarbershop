@@ -508,7 +508,7 @@
             <button class="book-btn" onclick="logout()" style="color:white; margin-top:30px; font-size:14px; opacity:0.7;">התנתק מהמערכת</button>
         </div>
 
-        <div id="page-booking" class="page">
+       <div id="page-booking" class="page">
     <div class="container">
         <div class="brand-card"><h2 id="booking-title" style="margin:0"></h2></div>
 
@@ -523,7 +523,10 @@
         </div>
 
         <p style="font-weight:bold; color:white; text-align:right;">בחר תאריך:</p>
-        <input type="date" id="book-date" class="input-style" onchange="loadHours()">
+        
+        <div id="calendar-container" style="margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;"></div>
+        
+        <input type="hidden" id="book-date">
         
         <div id="hours-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:20px;"></div>
         
@@ -577,6 +580,7 @@ function selectServiceType(element, name) {
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+let currentViewDate = new Date(); // זה המשתנה ששומר על איזה חודש אנחנו מסתכלים
         const ADMIN_ID = "0503450144";
         const GROUP_LINK = "https://chat.whatsapp.com/EeNFstAzW204sENypwxhkt";
         let hoursUnsubscribe = null;
@@ -705,6 +709,7 @@ if(document.getElementById('estimated-money')) document.getElementById('estimate
             document.getElementById('hamburger').style.display = (id !== 'page-login' && !isAdmin) ? 'block' : 'none';
             if(id === 'page-home') loadNews();
             if(id === 'page-booking') {
+bs_renderCalendar();
                 const dateInput = document.getElementById('book-date');
                 dateInput.value = ""; 
                 document.getElementById('hours-grid').innerHTML = "";
@@ -777,17 +782,24 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
             document.getElementById('booking-title').innerText = barber === 'חסימה' ? "חסימת שעה" : "תור אצל " + barber;
             showPage('page-booking');
         }
-
-        async function loadHours() {
-    const date = document.getElementById('book-date').value;
+async function loadHours() {
     const grid = document.getElementById('hours-grid');
+    if (!grid) return;
+
+    // 1. ניקוי: אם יש מאזין פעיל מהלחיצה הקודמת - תסגור אותו
+    if (hoursUnsubscribe !== null) {
+        hoursUnsubscribe(); 
+        hoursUnsubscribe = null;
+    }
+
+    grid.innerHTML = 'טוען שעות פנויות...';
+
+    const date = document.getElementById('book-date').value;
     const selectedBarber = localStorage.getItem('sel_barber');
     
     if(!date) return;
-    if(hoursUnsubscribe) hoursUnsubscribe();
-    grid.innerHTML = '<div style="color:white; text-align:center; padding: 20px; grid-column: span 3;">טוען תורים זמינים...</div>';
 
-    // --- התוספת הכירורגית לבדיקת חסימה ---
+    // 2. בדיקת חופשות (הקוד שלך)
     try {
         const dayOfWeek = new Date(date).getDay();
         const sDoc = await db.collection("settings").doc(`closed_${selectedBarber}`).get();
@@ -800,14 +812,13 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
 
         if (isClosed(sDoc) || isClosed(aDoc)) {
             grid.innerHTML = "<p style='grid-column: 1/4; color: #d4af37; text-align: center; padding: 20px; font-weight: bold;'>הספר בחופשה או שהמספרה סגורה ביום זה 📅</p>";
-            return; // עוצר כאן ולא ממשיך לטעינת השעות
+            return; 
         }
     } catch (e) {
         console.error("Error checking blocked days:", e);
     }
-    // --- סוף התוספת ---
 
-    // מכאן זה הקוד המקורי שלך בדיוק כפי ששלחת לי
+    // 3. טעינה: יצירת מאזין חדש ושמירתו במשתנה הגלובלי
     hoursUnsubscribe = db.collection("orders").where("date", "==", date).onSnapshot(snap => {
         const taken = snap.docs
             .filter(doc => doc.data().barber === selectedBarber || doc.data().barber === 'חסימה')
@@ -817,7 +828,6 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
         for(let h=10; h<19; h++) { hours.push(`${h}:00`, `${h}:30`); }
         
         grid.innerHTML = '';
-grid.id = 'date-' + date;
         hours.forEach(h => {
             if(!taken.includes(h)) {
                 const d = document.createElement('div');
@@ -828,7 +838,7 @@ grid.id = 'date-' + date;
             }
         });
         
-       if(grid.innerHTML === "") {
+        if(grid.innerHTML === "") {
             grid.innerHTML = `
                 <div style="grid-column: 1/4; text-align: center; padding: 20px; background: rgba(212, 175, 55, 0.05); border: 1px dashed #d4af37; border-radius: 12px;">
                     <p style="color: white; margin-bottom: 10px;">כל התורים להיום נתפסו...</p>
@@ -838,6 +848,11 @@ grid.id = 'date-' + date;
                     </button>
                 </div>
             `;
+// --- כאן הוספת הצביעה לאדום ---
+            markFullDays(date, true); 
+        } else {
+            // --- כאן הוספת החזרה לצבע רגיל אם התפנה תור ---
+            markFullDays(date, false); 
         }
     });
 }
@@ -1432,11 +1447,187 @@ function startAdminAlerts() {
               }
           });
       });
+}function bs_renderCalendar() {
+    const container = document.getElementById('calendar-container');
+    const year = currentViewDate.getFullYear();
+    const month = currentViewDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // רשימת שמות חודשים בעברית
+    const monthNames = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
+    
+    let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center; color:gold; margin-bottom:10px;">
+            <button onclick="bs_changeMonth(-1)" style="background:none; border:none; color:white; cursor:pointer;">◀</button>
+            <span>${monthNames[month]} ${year}</span>
+            <button onclick="bs_changeMonth(1)" style="background:none; border:none; color:white; cursor:pointer;">▶</button>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(7, 1fr); gap: 5px; color: white;">
+    `;
+    
+    // כותרות ימים... (אותו קוד שהיה)
+    const daysOfWeek = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    daysOfWeek.forEach(d => html += `<div style="text-align:center; font-weight:bold; color: #d4af37;">${d}</div>`);
+
+    // חפש את הלופ הזה בתוך bs_renderCalendar
+for (let i = 1; i <= daysInMonth; i++) {
+    const id = `day-cell-${i}`; // יצרנו מזהה ייחודי כמו day-cell-1, day-cell-2...
+    
+    html += `
+        <div id="${id}" onclick="bs_selectDate(${i})" style="padding: 8px; border: 1px solid #d4af37; border-radius: 5px; cursor: pointer; text-align: center;">
+            ${i}
+        </div>`;
+}
+     
+    html += `</div>`;
+    container.innerHTML = html;
+lockPastDays();
+markFullDaysForMonth();
+}
+
+// פונקציית דפדוף
+function bs_changeMonth(offset) {
+    currentViewDate.setMonth(currentViewDate.getMonth() + offset);
+    bs_renderCalendar(); // ציור מחדש של הלוח
+}
+function bs_selectDate(day) {
+    const month = currentViewDate.getMonth();
+    const year = currentViewDate.getFullYear();
+    const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    const el = document.getElementById(`day-cell-${day}`);
+
+    // אם היום אדום (מלא), נפתח את רשימת ההמתנה במקום את יומן השעות
+    if (el.dataset.isFull === "true") {
+        openWaitingListModal(dateStr); 
+    } else {
+        // יום פנוי - ממשיכים כרגיל
+        document.getElementById('book-date').value = dateStr;
+        document.querySelectorAll('#calendar-container div').forEach(el => el.style.background = 'transparent');
+        el.style.background = '#d4af37';
+        loadHours(); 
+}
+}function lockPastDays() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+    const currentViewYear = currentViewDate.getFullYear();
+    const currentViewMonth = currentViewDate.getMonth();
+
+    // אנחנו מביאים את כל האלמנטים בלוח (הגריד)
+    const gridItems = document.querySelectorAll('#calendar-container > div:last-child > div');
+    
+    // נדלג על 7 הראשונים (הכותרות א'-ש') בעזרת לולאה שמתחילה מהיום הראשון
+    // ה-Grid שלך מכיל 7 כותרות + ימי החודש.
+    gridItems.forEach((el, index) => {
+        // בודקים אם זה יום (כלומר אחרי 7 הכותרות הראשונות)
+        // אם index < 7, זה כותרת - לא ניגע בה!
+        if (index >= 7) {
+            const dayNumber = index - 6; // מחזיר את המספר ל-1, 2, 3...
+            const dateToCheck = new Date(currentViewYear, currentViewMonth, dayNumber);
+            
+            if (dateToCheck < today) {
+                el.style.opacity = "0.3";
+                el.style.pointerEvents = "none";
+                el.style.cursor = "default";
+                el.style.border = "1px solid #444";
+            }
+        }
+    });
+}
+function markFullDays(date, isFull) {
+    // נחלץ את היום מהתאריך (למשל '2026-03-05' -> 5)
+    const day = parseInt(date.split('-')[2]);
+    const el = document.getElementById(`day-cell-${day}`);
+    
+    if (el) {
+        if (isFull) {
+            el.style.backgroundColor = "#ff4444"; // אדום
+            el.style.color = "white";
+            el.style.border = "1px solid #900";
+        } else {
+            el.style.backgroundColor = "transparent";
+            el.style.color = "white";
+        }
+    }
+}let pendingOrder = {};
+window.confirmOrder = function(time, date) {
+    const selectedBarber = localStorage.getItem('sel_barber') || "לא נבחר ספר";
+    pendingOrder = { time, date, barber: selectedBarber };
+    
+    // הפיכת התאריך לפורמט ישראלי
+    const prettyDate = date.split('-').reverse().join('/');
+    
+    // כאן הייתה הטעות - השתמשת ב-date במקום ב-prettyDate
+    document.getElementById('confirm-details').innerText = 
+        `ספר: ${selectedBarber}\nתאריך: ${prettyDate}\nשעה: ${time}\n\nהאם לאשר את התור?`;
+    
+    document.getElementById('confirm-order-modal').style.display = 'flex';
+};
+// 2. סגירת המודאל
+window.hideConfirmModal = function() {
+    document.getElementById('confirm-order-modal').style.display = 'none';
+};window.runFinalizeOrder = async function() {
+    hideConfirmModal();
+    const name = localStorage.getItem('user_name');
+    const phone = localStorage.getItem('user_phone');
+    const barber = pendingOrder.barber;
+    const date = pendingOrder.date;
+    const time = pendingOrder.time;
+    // אם יש לך שדה מחירון או שירות, אפשר להוסיף כאן
+    const service = "תספורת"; 
+
+    try {
+        await db.collection("orders").add({ 
+            name, phone, barber, date, time, service,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            status: "פעיל"
+        });
+
+        const infoDiv = document.getElementById('success-info');
+        if (infoDiv) {
+            infoDiv.innerHTML = `
+                <strong>מעצב:</strong> ${barber}<br>
+                <strong>תאריך:</strong> ${date.split('-').reverse().join('/')}<br>
+                <strong>שעה:</strong> ${time}
+            `;
+        }
+        showPage('page-success'); 
+    } catch (e) {
+        console.error("שגיאה:", e);
+        alert("קרתה שגיאה בקביעת התור, נסה שוב.");
+    }
+};async function markFullDaysForMonth() {
+    const year = currentViewDate.getFullYear();
+    const month = (currentViewDate.getMonth() + 1).toString().padStart(2, '0');
+    
+    const snapshot = await db.collection("orders")
+        .where("date", ">=", `${year}-${month}-01`)
+        .where("date", "<=", `${year}-${month}-31`)
+        .get();
+
+    const counts = {};
+    snapshot.forEach(doc => {
+        const d = doc.data().date;
+        counts[d] = (counts[d] || 0) + 1;
+    });
+
+    Object.keys(counts).forEach(date => {
+        if (counts[date] >= 18) {
+            const day = parseInt(date.split('-')[2]);
+            const el = document.getElementById(`day-cell-${day}`);
+            if (el) {
+                el.style.backgroundColor = "#ff4444";
+                el.style.color = "white";
+                el.style.border = "1px solid #900";
+                // מחקנו את ה-pointer-events: none כדי שנוכל להמשיך ללחוץ!
+                el.dataset.isFull = "true"; // סימון שהיום מלא
+            }
+        }
+    });
 }
     </script>
 <div id="waitingListModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center;">
     <div style="background:#1a1a1a; padding:20px; border-radius:15px; width:280px; border:1px solid #d4af37; text-align:right; direction:rtl;">
-        <h3 style="color:#d4af37; margin:0 0 15px 0; font-size:18px;">מתי נוח לך להגיע?</h3>
+        <h3 style="color:#d4af37; margin:0 0 15px 0; font-size:18px;">הירשם להמתנה מתי נוח לך להגיע?</h3>
         <select id="preferredTime" style="width:100%; padding:10px; margin-bottom:20px; border-radius:8px; background:#333; color:white; border:1px solid #444;">
             <option value="בוקר (09:00-12:00)">בוקר (09:00-12:00)</option>
             <option value="צהריים (12:00-16:00)">צהריים (12:00-16:00)</option>
@@ -1445,6 +1636,16 @@ function startAdminAlerts() {
         </select>
         <button onclick="submitWaitingList()" style="width:100%; background:#d4af37; color:black; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">אישור רישום</button>
         <button onclick="closeWaitModal()" style="width:100%; background:none; color:#888; border:none; margin-top:10px; cursor:pointer;">ביטול</button>
+    </div>
+</div>
+<div id="confirm-order-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; text-align:center;">
+    <div style="background:#1a1a1a; padding:25px; border-radius:15px; border:1px solid #d4af37; width:80%; max-width:300px; color:white;">
+        <h3 style="color:#d4af37;">אישור קביעת תור</h3>
+        <p id="confirm-details" style="font-size:16px; margin:20px 0;"></p>
+        <div style="display:flex; gap:10px;">
+            <button onclick="hideConfirmModal()" style="flex:1; padding:10px; border-radius:8px; border:none; background:#444; color:white;">ביטול</button>
+            <button onclick="runFinalizeOrder()" style="flex:1; padding:10px; border-radius:8px; border:none; background:#d4af37; color:black; font-weight:bold;">אישור הזמנה</button>
+        </div>
     </div>
 </div>
 </body>
