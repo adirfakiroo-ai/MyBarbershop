@@ -417,9 +417,14 @@
 <button type="button" class="book-btn filled" style="margin-bottom:15px; background-color: #d4af37; color: black; border: none;" onclick="toggleDayBlockMenu()">
     📅 ניהול חופשות וימי סגירה
 </button>
-<div style="text-align: center; background: #f9f9f9; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #d4af37;">
-    <label style="font-weight: bold; color: #d4af37;">קפוץ ליום ביומן: </label>
-    <input type="date" id="jump-to-date" onchange="jumpToDate()">
+<div class="stat-box" 
+     style="padding:15px; border:1px solid #d4af37; border-radius:10px; background:#1a1a1a; text-align:center; margin-bottom:15px; cursor:pointer;"
+     onclick="document.getElementById('real-date-input').showPicker()">
+    
+    <div style="color:#d4af37; font-size:20px;">📅</div>
+    <div style="color:white; font-weight:bold; margin-top:5px;">קפוץ ליום ביומן</div>
+    
+    <input type="date" id="real-date-input" onchange="safeJump()" style="opacity: 0; height: 0; width: 0; position: absolute;">
 </div>
 <div id="day-block-menu" style="display:none; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed #d4af37; direction: rtl;">
 
@@ -1180,13 +1185,25 @@ function jumpToDate() {
     } else {
         alert("לא נמצאו תורים לתאריך הזה.");
     }
-}
-// פונקציות לניהול הפופ-אפ
-async function sendPopup() {
-    const txt = document.getElementById('admin-popup-input').value;
-    if(!txt) return alert("כתוב משהו...");
-    await db.collection("settings").doc("popup").set({ text: txt, time: Date.now() });
-    alert("הפופ-אפ נשלח!");
+}function jumpToDateWithTab() {
+    // 1. קודם כל עוברים לטאב של היומן
+    const calendarBtn = document.querySelector('[onclick*="tab-calendar"]');
+    if (calendarBtn) {
+        calendarBtn.click();
+    }
+
+    // 2. מחכים קצת שהטאב ייפתח, ואז קופצים לתאריך
+    setTimeout(function() {
+        // שימוש ב-ID המקורי jump-to-date שיש ברובליקה למעלה
+        const selectedDate = document.getElementById('jump-to-date').value;
+        const targetElement = document.getElementById('date-' + selectedDate);
+        
+        if (targetElement) {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            alert("לא נמצאו תורים בתאריך הזה.");
+        }
+    }, 300);
 }
 
 async function clearPopup() {
@@ -1648,6 +1665,26 @@ window.hideConfirmModal = function() {
             }
         }
     });
+}
+function safeJump() {
+    // 1. פתיחת הטאב (החלק שכבר עובד לך)
+    const calendarBtn = document.querySelector('[onclick*="tab-calendar"]');
+    if (calendarBtn) {
+        calendarBtn.click();
+    }
+
+    // 2. קפיצה לתאריך הנבחר
+    setTimeout(function() {
+        // שים לב: אנחנו שולפים את הערך מה-ID החדש
+        const selectedDate = document.getElementById('real-date-input').value;
+        const targetElement = document.getElementById('date-' + selectedDate);
+        
+        if (targetElement) {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            alert("לא נמצאו תורים לתאריך הזה: " + selectedDate);
+        }
+    }, 300);
 }
     </script>
 <div id="waitingListModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center;">
