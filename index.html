@@ -417,15 +417,15 @@
 <button type="button" class="book-btn filled" style="margin-bottom:15px; background-color: #d4af37; color: black; border: none;" onclick="toggleDayBlockMenu()">
     📅 ניהול חופשות וימי סגירה
 </button>
-<div class="stat-box" 
-     style="padding:15px; border:1px solid #d4af37; border-radius:10px; background:#1a1a1a; text-align:center; margin-bottom:15px; cursor:pointer;"
-     onclick="document.getElementById('real-date-input').showPicker()">
+<label for="real-date-input" 
+       style="display: block; position: relative; padding:15px; border:1px solid #d4af37; border-radius:10px; background:#1a1a1a; text-align:center; margin-bottom:15px; cursor:pointer;">
     
     <div style="color:#d4af37; font-size:20px;">📅</div>
     <div style="color:white; font-weight:bold; margin-top:5px;">קפוץ ליום ביומן</div>
     
-    <input type="date" id="real-date-input" onchange="safeJump()" style="opacity: 0; height: 0; width: 0; position: absolute;">
-</div>
+    <input type="date" id="real-date-input" onchange="safeJump()" 
+           style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
+</label>
 <div id="day-block-menu" style="display:none; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed #d4af37; direction: rtl;">
 
 
@@ -488,19 +488,6 @@
             </div>
 
             <div id="tab-stats" class="tab-content">
-<div id="business-insights" style="background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(0,0,0,0.6)); border: 1px solid rgba(212,175,55,0.4); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: right;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <span id="estimated-money" style="color: #4CAF50; font-weight: bold; font-size: 20px;">₪0</span>
-            <span style="color: #d4af37; font-size: 14px; font-weight: bold;">💰 צפי הכנסה (החודש)</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px;">
-            <span id="load-percentage" style="color: #d4af37;">0%</span>
-            <span>עומס עבודה חודשי</span>
-        </div>
-        <div style="width: 100%; background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
-            <div id="load-bar" style="width: 0%; height: 100%; background: #d4af37; transition: width 1s;"></div>
-        </div>
-    </div>
                 <div class="stats-grid">
                     <div class="stat-box"><div id="rep-month-total" class="stat-val">0</div><div class="stat-label">תורים החודש</div></div>
                     <div class="stat-box"><div id="rep-users-total" class="stat-val">0</div><div class="stat-label">לקוחות במערכת</div></div>
