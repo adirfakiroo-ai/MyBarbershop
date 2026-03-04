@@ -422,14 +422,9 @@
     <input type="date" id="jump-to-date" onchange="jumpToDate()">
 </div>
 <div id="day-block-menu" style="display:none; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed #d4af37; direction: rtl;">
-    <h5 style="color:#d4af37; margin: 0 0 10px 0; font-size: 14px;">1. בחר עבור מי החסימה:</h5>
-    <select id="block-barber-select" class="input-style" style="margin-bottom:15px; border-color:#d4af37; width:100%; background:#1a1a1a; color:white;" onchange="loadBlockedDaysSettings()">
-        <option value="all">כל הספרים (כללי)</option>
-        <option value="עמית">עמית</option>
-        <option value="אורי">אורי</option>
-    </select>
 
-    <h5 style="color:#d4af37; margin: 0 0 10px 0; font-size: 14px;">2. חסימת יום קבוע בשבוע:</h5>
+
+    <h5 style="color:#d4af37; margin: 0 0 10px 0; font-size: 14px;">1. חסימת יום קבוע בשבוע:</h5>
     <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:15px;">
         <button type="button" onclick="toggleWeekly(0)" id="day-0" class="day-circle">א</button>
         <button type="button" onclick="toggleWeekly(1)" id="day-1" class="day-circle">ב</button>
@@ -439,11 +434,21 @@
         <button type="button" onclick="toggleWeekly(5)" id="day-5" class="day-circle">ו</button>
         <button type="button" onclick="toggleWeekly(6)" id="day-6" class="day-circle">ש</button>
     </div>
-
-    <h5 style="color:#d4af37; margin: 0 0 10px 0; font-size: 14px;">3. חסימת תאריך ספציפי (חופשה):</h5>
-    <div style="display:flex; gap:10px;">
-        <input type="date" id="specific-date-input" class="input-style" style="margin:0; flex:2; height: 40px; border-color:#d4af37; background:#1a1a1a; color:white;">
-        <button type="button" onclick="blockSpecificDate()" class="book-btn filled" style="flex:1; margin:0; height: 40px; background-color:#d4af37; color:black;">חסום</button>
+<h5 style="color:#d4af37; margin: 0 0 10px 0; font-size: 14px;">2. בחר עבור מי החסימה:</h5>
+    <select id="block-barber-select" class="input-style" style="margin-bottom:15px; border-color:#d4af37; width:100%; background:#1a1a1a; color:white;" onchange="loadBlockedDaysSettings()">
+        <option value="all">כל הספרים (כללי)</option>
+        <option value="עמית">עמית</option>
+        <option value="אורי">אורי</option>
+    </select>
+   <h5 style="color:#d4af37; margin: 0 0 10px 0; font-size: 14px;">3. חסימת תאריך ספציפי (חופשה):</h5>
+    <div style="display:flex; gap:10px; align-items:center; justify-content:center;">
+        <input type="date" id="specific-date-input" class="input-style" 
+               style="margin:0; height: 40px; border-color:#d4af37; background:#1a1a1a; color:white; flex: 2;">
+        
+        <button type="button" onclick="blockSpecificDate()" class="book-btn filled" 
+                style="margin-top: 5px; height: 40px; background-color:#d4af37; color:black; flex: 1; padding: 0 10px; border:none; border-radius:5px;">
+            חסום
+        </button>
     </div>
     <div id="blocked-dates-chips" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:15px;"></div>
 </div>
@@ -776,12 +781,32 @@ if(document.getElementById('display-user-name')) document.getElementById('displa
                 checkNextAppointmentSimple(); // הפקודה החדשה שהוספנו
             }
         }
+// משתנה עזר לשמירת הסטטוס
+let isBlocking = false;
 
-        function startBooking(barber) {
-            localStorage.setItem('sel_barber', barber);
-            document.getElementById('booking-title').innerText = barber === 'חסימה' ? "חסימת שעה" : "תור אצל " + barber;
-            showPage('page-booking');
-        }
+function startBooking(barber) {
+    if (barber === 'חסימה') {
+        isBlocking = true;
+        // מציג את המודאל החדש שבנינו
+        document.getElementById('barber-select-modal').style.display = 'flex';
+    } else {
+        // התנהגות רגילה של תור
+        localStorage.setItem('sel_barber', barber);
+        document.getElementById('booking-title').innerText = "תור אצל " + barber;
+        showPage('page-booking');
+    }
+}
+
+function confirmBarberSelection() {
+    const choice = document.getElementById('barber-choice').value;
+    document.getElementById('barber-select-modal').style.display = 'none';
+    
+    // ממשיך בדיוק לאותו מסלול שהיה קודם
+    localStorage.setItem('sel_barber', choice);
+    document.getElementById('booking-title').innerText = "חסימת שעה ל" + choice;
+    showPage('page-booking');
+    isBlocking = false;
+}
 async function loadHours() {
     const grid = document.getElementById('hours-grid');
     if (!grid) return;
@@ -1646,6 +1671,16 @@ window.hideConfirmModal = function() {
             <button onclick="hideConfirmModal()" style="flex:1; padding:10px; border-radius:8px; border:none; background:#444; color:white;">ביטול</button>
             <button onclick="runFinalizeOrder()" style="flex:1; padding:10px; border-radius:8px; border:none; background:#d4af37; color:black; font-weight:bold;">אישור הזמנה</button>
         </div>
+    </div>
+</div>
+<div id="barber-select-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#222; padding:20px; border-radius:10px; border:1px solid #d4af37; text-align:center; color:white; width:80%; max-width:300px;">
+        <h4 style="margin-top:0;">בחר ספר לחסימה:</h4>
+        <select id="barber-choice" style="width:100%; padding:10px; margin:15px 0; background:#333; color:white; border:1px solid #d4af37;">
+            <option value="עמית">עמית</option>
+            <option value="אורי">אורי</option>
+        </select>
+        <button onclick="confirmBarberSelection()" style="width:100%; padding:10px; background:#d4af37; border:none; border-radius:5px; font-weight:bold;">אישור</button>
     </div>
 </div>
 </body>
