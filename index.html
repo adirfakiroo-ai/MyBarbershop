@@ -410,32 +410,22 @@
 </div>
             <div id="tab-calendar" class="tab-content active">
                 <div class="stats-grid">
-                    <div class="stat-box"><div id="stat-today" class="stat-val">0</div><div class="stat-label">תורים היום סה"כ</div></div>
-                    <div class="stat-box"><div id="stat-week" class="stat-val">0</div><div class="stat-label">תורים השבוע סה"כ</div></div>
+                    <div class="stat-box"><div id="stat-today" class="stat-val">0</div><div class="stat-label">תורים היום</div></div>
+                    <div class="stat-box"><div id="stat-week" class="stat-val">0</div><div class="stat-label">השבוע בסה"כ</div></div>
                 </div>
-<div class="stats-grid">
-    <div class="stat-box">
-        <div id="stat-amit-today" class="stat-val">0</div>
-        <div class="stat-label">תורים עמית היום</div>
-    </div>
-    <div class="stat-box">
-        <div id="stat-ori-today" class="stat-val">0</div>
-        <div class="stat-label">תורים אורי היום</div>
-    </div>
-</div>
                 <button class="book-btn filled" style="margin-bottom:15px;" onclick="startBooking('חסימה')">🚫 חסום שעה</button>
 <button type="button" class="book-btn filled" style="margin-bottom:15px; background-color: #d4af37; color: black; border: none;" onclick="toggleDayBlockMenu()">
     📅 ניהול חופשות וימי סגירה
 </button>
-<div class="stat-box" 
-     style="padding:15px; border:1px solid #d4af37; border-radius:10px; background:#1a1a1a; text-align:center; margin-bottom:15px; cursor:pointer;"
-     onclick="document.getElementById('real-date-input').showPicker()">
+<label for="real-date-input" 
+       style="display: block; position: relative; padding:15px; border:1px solid #d4af37; border-radius:10px; background:#1a1a1a; text-align:center; margin-bottom:15px; cursor:pointer;">
     
     <div style="color:#d4af37; font-size:20px;">📅</div>
     <div style="color:white; font-weight:bold; margin-top:5px;">קפוץ ליום ביומן</div>
     
-    <input type="date" id="real-date-input" onchange="safeJump()" style="opacity: 0; height: 0; width: 0; position: absolute;">
-</div>
+    <input type="date" id="real-date-input" onchange="safeJump()" 
+           style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
+</label>
 <div id="day-block-menu" style="display:none; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed #d4af37; direction: rtl;">
 
 
@@ -936,27 +926,16 @@ async function loadHours() {
             db.collection("orders").where("date", ">=", todayStr).onSnapshot(snap => {
                 const container = document.getElementById('admin-list');
                 let todayCount = 0;
-let amitTodayCount = 0; // הוסף את זה
-        let oriTodayCount = 0;  // הוסף את זה
                 let orders = [];
                 
-             snap.forEach(doc => {
-    const data = doc.data();
-    
-    // בודקים אם התור הוא להיום ושהוא לא חסום
-    if(data.date === todayStr && data.barber !== 'חסימה') {
-        todayCount++; // זה המונה הכללי שלך
-        
-        // ספירה ספציפית לכל ספר
-        if(data.barber === 'עמית') amitTodayCount++;
-        if(data.barber === 'אורי') oriTodayCount++;
-    }
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    if(data.date === todayStr && data.barber !== 'חסימה') todayCount++;
                     orders.push({id: doc.id, ...data});
                 });
-document.getElementById('stat-today').innerText = todayCount;
-document.getElementById('stat-week').innerText = snap.size;
-document.getElementById('stat-amit-today').innerText = amitTodayCount;
-document.getElementById('stat-ori-today').innerText = oriTodayCount;
+
+                document.getElementById('stat-today').innerText = todayCount;
+                document.getElementById('stat-week').innerText = snap.size;
                 
                 orders.sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
@@ -1693,26 +1672,6 @@ function safeJump() {
             alert("לא נמצאו תורים לתאריך הזה: " + selectedDate);
         }
     }, 300);
-}
-function updateBarberStats(orders) {
-    let amitCount = 0;
-    let oriCount = 0;
-    const today = new Date().toISOString().split('T')[0]; // תאריך של היום בפורמט YYYY-MM-DD
-
-    orders.forEach(order => {
-        // בודקים אם התור הוא להיום ומשייכים לספר הנכון
-        if (order.date === today) {
-            if (order.barber === "עמית") {
-                amitCount++;
-            } else if (order.barber === "אורי") {
-                oriCount++;
-            }
-        }
-    });
-
-    // עדכון הריבועים החדשים
-    document.getElementById('stat-amit-today').innerText = amitCount;
-    document.getElementById('stat-ori-today').innerText = oriCount;
 }
     </script>
 <div id="waitingListModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center;">
