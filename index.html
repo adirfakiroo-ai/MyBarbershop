@@ -422,8 +422,7 @@
         <div id="stat-ori-today" class="stat-val">0</div>
         <div class="stat-label">תורים אורי היום</div>
     </div>
-</div>
-                <button class="book-btn filled" style="margin-bottom:15px;" onclick="startBooking('חסימה')">חסום שעה 🚫</button>
+</div><button class="book-btn filled" style="margin-bottom:15px;" onclick="document.getElementById('barber-select-modal').style.display = 'flex'">חסימת תורים 🚫</button>
 <button type="button" class="book-btn filled" style="margin-bottom:15px; background-color: #d4af37; color: black; border: none;" onclick="toggleDayBlockMenu()">
      ניהול חופשות וימי סגירה 📅
 </button>
@@ -798,17 +797,22 @@ function startBooking(barber) {
         showPage('page-booking');
     }
 }
-
-function confirmBarberSelection() {
-    const choice = document.getElementById('barber-choice').value;
+window.confirmBarberSelection = function() {
+    // 1. שמירת הספר שנבחר לחסימה
+    const barber = document.getElementById('barber-choice').value;
+    localStorage.setItem('admin_target_barber', barber);
+    
+    // 2. הפעלת "דגל" החסימה
+    localStorage.setItem('admin_blocking_mode', 'true');
+    
+    // 3. סגירת המודאל
     document.getElementById('barber-select-modal').style.display = 'none';
     
-    // ממשיך בדיוק לאותו מסלול שהיה קודם
-    localStorage.setItem('sel_barber', choice);
-    document.getElementById('booking-title').innerText = "חסימת שעה ל" + choice;
-    showPage('page-booking');
-    isBlocking = false;
-}
+    // 4. התיקון: שימוש ב-'page-booking' במקום 'page-book'
+    // תבדוק אם זה השם הנכון לפי ה-startBooking שלך למטה
+    document.getElementById('booking-title').innerText = "חסימת שעה עבור " + barber;
+    showPage('page-booking'); 
+};
 async function loadHours() {
     const grid = document.getElementById('hours-grid');
     if (!grid) return;
@@ -822,7 +826,8 @@ async function loadHours() {
     grid.innerHTML = 'טוען שעות פנויות...';
 
     const date = document.getElementById('book-date').value;
-    const selectedBarber = localStorage.getItem('sel_barber');
+    const isBlocking = localStorage.getItem('admin_blocking_mode') === 'true';
+const selectedBarber = isBlocking ? localStorage.getItem('admin_target_barber') : localStorage.getItem('sel_barber');
     
     if(!date) return;
 
@@ -896,7 +901,7 @@ async function loadHours() {
             try {
                 // הוספנו כאן את service כדי שזה יישמר באדמין
                 await db.collection("orders").add({ 
-                    name, 
+                    name: isBlocking ? "תור נחסם ע\"י מנהל" : name, // <--- זה השינוי!
                     phone, 
                     barber, 
                     date, 
@@ -1612,18 +1617,23 @@ window.confirmOrder = function(time, date) {
     
     document.getElementById('confirm-order-modal').style.display = 'flex';
 };
-// 2. סגירת המודאל
+// 2. סגירת המודאל// --- הפונקציה שלפני ---
 window.hideConfirmModal = function() {
     document.getElementById('confirm-order-modal').style.display = 'none';
-};window.runFinalizeOrder = async function() {
+}; 
+
+// --- הפונקציה שלנו (המתוקנת) ---
+window.runFinalizeOrder = async function() {
+    console.log("הפונקציה הופעלה!");
     hideConfirmModal();
-    const name = localStorage.getItem('user_name');
-    const phone = localStorage.getItem('user_phone');
-    const barber = pendingOrder.barber;
+    
+    const isBlocking = localStorage.getItem('admin_blocking_mode') === 'true';
+    const name = isBlocking ? "חסימה" : localStorage.getItem('user_name');
+    const phone = isBlocking ? "000" : localStorage.getItem('user_phone');
+    const barber = isBlocking ? localStorage.getItem('admin_target_barber') : pendingOrder.barber;
     const date = pendingOrder.date;
     const time = pendingOrder.time;
-    // אם יש לך שדה מחירון או שירות, אפשר להוסיף כאן
-    const service = "תספורת"; 
+    const service = isBlocking ? "חסימה" : "תספורת"; 
 
     try {
         await db.collection("orders").add({ 
@@ -1632,20 +1642,26 @@ window.hideConfirmModal = function() {
             status: "פעיל"
         });
 
-        const infoDiv = document.getElementById('success-info');
-        if (infoDiv) {
-            infoDiv.innerHTML = `
-                <strong>מעצב:</strong> ${barber}<br>
-                <strong>תאריך:</strong> ${date.split('-').reverse().join('/')}<br>
-                <strong>שעה:</strong> ${time}
-            `;
+        if (isBlocking) {
+            localStorage.removeItem('admin_blocking_mode');
+            localStorage.removeItem('admin_target_barber');
+            alert("התור נחסם בהצלחה!");
+            showPage('page-admin');
+        } else {
+            const infoDiv = document.getElementById('success-info');
+            if (infoDiv) {
+                infoDiv.innerHTML = `<strong>מעצב:</strong> ${barber}<br><strong>תאריך:</strong> ${date.split('-').reverse().join('/')}<br><strong>שעה:</strong> ${time}`;
+            }
+            showPage('page-success');
         }
-        showPage('page-success'); 
     } catch (e) {
         console.error("שגיאה:", e);
         alert("קרתה שגיאה בקביעת התור, נסה שוב.");
     }
-};async function markFullDaysForMonth() {
+};
+
+// --- הפונקציה שאחרי ---
+async function markFullDaysForMonth() {
     const year = currentViewDate.getFullYear();
     const month = (currentViewDate.getMonth() + 1).toString().padStart(2, '0');
     
@@ -1668,8 +1684,7 @@ window.hideConfirmModal = function() {
                 el.style.backgroundColor = "#ff4444";
                 el.style.color = "white";
                 el.style.border = "1px solid #900";
-                // מחקנו את ה-pointer-events: none כדי שנוכל להמשיך ללחוץ!
-                el.dataset.isFull = "true"; // סימון שהיום מלא
+                el.dataset.isFull = "true";
             }
         }
     });
@@ -1750,3 +1765,4 @@ function updateBarberStats(orders) {
 </div>
 </body>
 </html>
+
